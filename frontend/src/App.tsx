@@ -26,7 +26,7 @@ export type ServerInfo = {
 };
 
 async function fetchStatus(serverName: string): Promise<ServerInfo> {
-  const response = await fetch(`http://localhost:4000/status/${serverName}`);
+  const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/status/${serverName}`);
 
   if (response.status === 404) {
     throw new Error('Not found')
