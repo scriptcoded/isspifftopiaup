@@ -80,6 +80,17 @@ fastify.get('/status/:serverName', (request: StatusRequest, reply) => {
   }
 
   reply.send(info);
+
+  // reply.send({
+  //   status: ServerStatus.Online,
+  //   queue: 412,
+  //   queueTime: {
+  //     minutes: 102,
+  //     seconds: 30,
+  //   },
+  //   checkedAt: new Date(),
+  //   message: null,
+  // } satisfies ServerInfo);
 });
 
 // Run the server!
