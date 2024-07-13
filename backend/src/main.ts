@@ -59,6 +59,12 @@ for (const [name, server] of servers.entries()) {
   checkAndStoreServer(name, server);
 }
 
+fastify.get('/', (request, reply) => {
+  reply.send({
+    alive: true
+  })
+})
+
 // Declare a route
 fastify.get('/status/:serverName', (request: StatusRequest, reply) => {
   const { serverName } = request.params;
