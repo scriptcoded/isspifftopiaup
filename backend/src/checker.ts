@@ -1,5 +1,6 @@
 import mc, { Server } from 'minecraft-protocol';
 import nbt from 'prismarine-nbt';
+import { uploadProfile } from './profileStorage.js';
 
 export enum ServerStatus {
   Online = 'Online',
@@ -43,7 +44,13 @@ function parseWait(wait: string) {
   };
 }
 
-export function checkServer(host: string, port = 25565): Promise<ServerInfo> {
+let uploadedProfile = false;
+
+export function checkServer(
+  profilesFolder: string,
+  host: string,
+  port = 25565,
+): Promise<ServerInfo> {
   const info: ServerInfo = {
     status: ServerStatus.Unknown,
     queue: null,
@@ -53,12 +60,29 @@ export function checkServer(host: string, port = 25565): Promise<ServerInfo> {
   };
 
   return new Promise((resolve, reject) => {
+    const username = process.env.MINECRAFT_USERNAME;
+    if (!username) {
+      reject(new Error('Environment variable MINECRAFT_USERNAME not set'));
+      return;
+    }
+
     const client = mc.createClient({
       host,
       port,
       version: '1.20.4',
-      username: 'wildevy',
+      username,
       auth: 'microsoft',
+      profilesFolder,
+    });
+
+    client.on('session', () => {
+      if (!uploadedProfile) {
+        uploadProfile(profilesFolder)
+          .then(() => {
+            uploadedProfile = true;
+          })
+          .catch((error) => console.error('Failed uploading profile:', error));
+      }
     });
 
     let finishedGracefully = false;
@@ -66,7 +90,7 @@ export function checkServer(host: string, port = 25565): Promise<ServerInfo> {
 
     const timeoutTimer = setTimeout(() => {
       if (!finishedGracefully) {
-        info.status = ServerStatus.Unknown;
+        info.status = ServerStatus.Offline;
         info.message = `Received no expected status within ${TOTAL_TIMEOUT} seconds`;
         resolveGracefully();
       }
@@ -99,7 +123,7 @@ export function checkServer(host: string, port = 25565): Promise<ServerInfo> {
       if (!finishedGracefully) {
         setTimeout(() => {
           if (!finishedGracefully) {
-            info.status = ServerStatus.Unknown;
+            info.status = ServerStatus.Offline;
             info.message = `Disconnected: ${reason}`;
             resolveGracefully();
           }

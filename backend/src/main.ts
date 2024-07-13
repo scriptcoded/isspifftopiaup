@@ -1,8 +1,10 @@
 import Fastify, { type FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import httpErrors from 'http-errors';
+import * as path from 'node:path';
 
 import { checkServer, type ServerInfo, ServerStatus } from './checker.js';
+import { downloadProfile, uploadProfile } from './profileStorage.js';
 
 const fastify = Fastify({
   logger: true,
@@ -33,11 +35,14 @@ type StatusRequest = FastifyRequest<{
   };
 }>;
 
+const profilesFolder = path.resolve('.minecraft');
+await downloadProfile(profilesFolder);
+
 function checkAndStoreServer(name: string, server: ServerConfig) {
-  console.log('##### Running checker!')
-  checkServer(server.host, server.port)
+  console.log('##### Running checker!');
+  checkServer(profilesFolder, server.host, server.port)
     .then((info) => {
-      console.log('##### Checker done!')
+      console.log('##### Checker done!');
       serverInfos.set(name, info);
     })
     .catch((err) => {
@@ -61,9 +66,9 @@ for (const [name, server] of servers.entries()) {
 
 fastify.get('/', (request, reply) => {
   reply.send({
-    alive: true
-  })
-})
+    alive: true,
+  });
+});
 
 // Declare a route
 fastify.get('/status/:serverName', (request: StatusRequest, reply) => {
