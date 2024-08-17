@@ -21,7 +21,7 @@ const servers = new Map<string, ServerConfig>([
   [
     'spifftopia',
     {
-      host: 'test.spifftopia.net',
+      host: 'flat.spifftopia.net',
       interval: 60 * 2,
     },
   ],
